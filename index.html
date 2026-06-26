@@ -1,0 +1,1402 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Pathway Translator</title>
+
+<style>
+body {
+  margin: 0;
+  font-family: Arial, sans-serif;
+  background: #f4f4f5;
+  padding: 20px;
+  color: #111827;
+}
+
+.page {
+  max-width: 1120px;
+  margin: auto;
+}
+
+.header {
+  margin-bottom: 20px;
+}
+
+.header h1 {
+  margin: 0;
+  font-size: 34px;
+}
+
+.header p {
+  margin: 6px 0;
+  color: #444;
+  line-height: 1.5;
+}
+
+.subtle {
+  font-size: 14px;
+  color: #666;
+}
+
+.container {
+  display: grid;
+  grid-template-columns: 1fr 1.2fr;
+  gap: 20px;
+}
+
+.box {
+  background: white;
+  padding: 20px;
+  border-radius: 14px;
+  box-shadow: 0 1px 8px rgba(0,0,0,0.05);
+}
+
+textarea {
+  width: 100%;
+  height: 260px;
+  padding: 12px;
+  border-radius: 10px;
+  border: 1px solid #ccc;
+  font-family: Arial, sans-serif;
+  font-size: 16px;
+  box-sizing: border-box;
+  line-height: 1.45;
+}
+
+button {
+  padding: 12px;
+  width: 100%;
+  margin-top: 10px;
+  cursor: pointer;
+  background: #0f172a;
+  color: white;
+  border: none;
+  border-radius: 10px;
+  font-weight: bold;
+  font-size: 16px;
+}
+
+.secondary-button {
+  background: #e5e7eb;
+  color: #111827;
+}
+
+.card {
+  border: 1px solid #ddd;
+  padding: 14px;
+  margin-top: 12px;
+  border-radius: 12px;
+  background: #fff;
+  line-height: 1.6;
+}
+
+.highlight {
+  background: #e8f5e9;
+  border: 1px solid #a5d6a7;
+}
+
+.warning {
+  background: #fff7ed;
+  border: 1px solid #fed7aa;
+}
+
+.soft {
+  background: #f9fafb;
+  border: 1px solid #e5e7eb;
+}
+
+.blue {
+  background: #eef6ff;
+  padding: 12px;
+  margin-top: 12px;
+  border-radius: 10px;
+  font-size: 14px;
+  color: #1e3a5f;
+  line-height: 1.55;
+}
+
+.helper-note {
+  margin-top: 8px;
+  font-size: 13px;
+  color: #4b5563;
+  line-height: 1.45;
+}
+
+.dark {
+  background: #111827;
+  color: white;
+  padding: 15px;
+  margin-top: 15px;
+  border-radius: 12px;
+  line-height: 1.6;
+}
+
+.placeholder {
+  color: #555;
+  line-height: 1.6;
+  font-size: 14px;
+}
+
+.badge-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 8px;
+}
+
+.badge {
+  display: inline-block;
+  padding: 6px 9px;
+  background: #f3f4f6;
+  border-radius: 999px;
+  font-size: 13px;
+  font-weight: bold;
+  color: #374151;
+}
+
+.badge-blue {
+  background: #dbeafe;
+  color: #1d4ed8;
+}
+
+.badge-orange {
+  background: #ffedd5;
+  color: #c2410c;
+}
+
+.badge-red {
+  background: #fee2e2;
+  color: #b91c1c;
+}
+
+.section-label {
+  font-size: 13px;
+  color: #6b7280;
+  text-transform: uppercase;
+  letter-spacing: .04em;
+  margin-bottom: 5px;
+  font-weight: bold;
+}
+
+.sample-list {
+  margin-top: 12px;
+}
+
+.sample {
+  border: 1px solid #e5e7eb;
+  border-radius: 10px;
+  padding: 10px;
+  margin-top: 8px;
+  cursor: pointer;
+  background: #fafafa;
+  font-size: 14px;
+  line-height: 1.45;
+}
+
+.sample:hover {
+  background: #f3f4f6;
+}
+
+.footer-note {
+  margin-top: 16px;
+  color: #6b7280;
+  font-size: 13px;
+  line-height: 1.5;
+}
+
+.details {
+  margin-top: 12px;
+}
+
+details {
+  margin-top: 12px;
+}
+
+summary {
+  cursor: pointer;
+  font-weight: bold;
+  color: #374151;
+}
+
+ul {
+  margin-bottom: 0;
+  padding-left: 22px;
+}
+
+@media (max-width: 860px) {
+  .container {
+    grid-template-columns: 1fr;
+  }
+
+  .header h1 {
+    font-size: 28px;
+  }
+}
+</style>
+</head>
+
+<body>
+
+<div class="page">
+
+  <div class="header">
+    <h1>Pathway Translator</h1>
+    <p>Tell me what’s happening in your job search. I’ll help identify what may be blocking you, what is still unclear, and what to check next.</p>
+    <p class="subtle">A job-search clarity tool. Not generic advice. Not just a resume writer.</p>
+  </div>
+
+  <div class="container">
+
+    <div class="box">
+      <h3>Tell me what’s been happening</h3>
+
+      <textarea id="inputText">I’ve applied to over 100 jobs. I meet most of the requirements, but I either get no response or rejected. I feel like my experience should count, but maybe it isn’t being read correctly.</textarea>
+
+      <button onclick="analyze()">Help Me Understand What’s Happening</button>
+      <div class="helper-note">The more context you provide, the more accurate your results become.</div>
+      <button class="secondary-button" onclick="clearInput()">Clear</button>
+
+      <div class="blue">
+        <b>For better results, include:</b><br>
+        • What roles you are applying to<br>
+        • How many applications you sent<br>
+        • How many interviews you received<br>
+        • Whether rejections are instant, delayed, or silent<br>
+        • Whether you are using one resume or different versions<br>
+        • One job description you want to compare against, if available
+      </div>
+
+      <div class="sample-list">
+        <div class="section-label">Try an example</div>
+
+        <div class="sample" onclick="loadSample(0)">100 applications, no responses</div>
+        <div class="sample" onclick="loadSample(1)">Applied late / position already filled</div>
+        <div class="sample" onclick="loadSample(2)">300 applications, 0 interviews</div>
+        <div class="sample" onclick="loadSample(3)">Transferable skills are not being recognized</div>
+        <div class="sample" onclick="loadSample(4)">Interviews but no offers</div>
+        <div class="sample" onclick="loadSample(5)">Career change and unsure what fits</div>
+        <div class="sample" onclick="loadSample(6)">Hybrid profile: admin + hands-on transition</div>
+      </div>
+    </div>
+
+    <div class="box">
+      <h3>Your Results</h3>
+
+      <div id="output" class="placeholder">
+        <b>Paste your situation and click “Help Me Understand What’s Happening.”</b><br><br>
+
+        The goal is to understand:
+        <ul>
+          <li>what seems to be happening</li>
+          <li>what information is missing</li>
+          <li>what issue is most likely</li>
+          <li>what to test next</li>
+          <li>what to do now</li>
+        </ul>
+      </div>
+    </div>
+
+  </div>
+
+  <div class="footer-note">
+    Demo version. Results improve when you include your resume, target role, and one job description.
+  </div>
+
+</div>
+
+<script>
+const samples = [
+  "I’ve applied to over 100 jobs. I meet most of the requirements, but I either get no response or rejected. I feel like my experience should count, but maybe it isn’t being read correctly.",
+  "They replied late and told me the position was already filled. I feel like I applied but never really had a chance.",
+  "I’ve applied to 300 jobs and haven’t gotten a single interview. I don’t know if it is my resume, the job market, ATS, or the jobs I am applying to.",
+  "I have customer service and front desk experience. I’m applying to admin jobs, but I get ghosted. It feels like transferable skills don’t matter because the system doesn’t read them correctly.",
+  "I get interviews, but I do not get offers. I make it past the first step, but after the interview I usually get rejected or never hear back.",
+  "I want to change careers, but I don’t know what roles fit me. I have a business degree, customer service experience, some operations exposure, and I’m not sure what direction makes the most sense.",
+  "I have admin experience, Excel, workflows, and systems. I also did merchandising and hands-on physical work using tools and following instructions. I’m trying to get into low voltage or admin roles, but I’m not sure if my background is being read correctly."
+];
+
+function loadSample(index) {
+  document.getElementById("inputText").value = samples[index];
+  analyze();
+}
+
+function clearInput() {
+  document.getElementById("inputText").value = "";
+  document.getElementById("output").innerHTML =
+    "<b>Paste your situation and click “Help Me Understand What’s Happening.”</b><br><br>Describe your experience, what jobs you’re applying to, and what keeps happening.";
+  document.getElementById("output").className = "placeholder";
+}
+
+function analyze() {
+  const input = document.getElementById("inputText").value;
+  const output = document.getElementById("output");
+
+  if (!input || input.trim().length < 10) {
+    output.className = "placeholder";
+    output.innerHTML =
+      "<b>I need a little more context first.</b><br><br>Add what roles you’re applying to, how many applications you sent, how many interviews you received, and what usually happens next.";
+    return;
+  }
+
+  const result = analyzeUser(input);
+  output.className = "";
+  output.innerHTML = renderResult(result);
+}
+
+function normalizeInput(text) {
+  return text
+    .toLowerCase()
+    .replace(/[^\w\s]/g, " ")
+    .replace(/\s+/g, " ")
+    .trim();
+}
+
+const misinterpretationPatterns = [
+  "luck",
+  "lottery",
+  "random",
+  "just chance",
+  "chance",
+  "no control",
+  "nothing makes sense",
+  "luck of the draw",
+  "pure numbers game"
+];
+
+const hybridSignals = [
+  "admin",
+  "administrative",
+  "business",
+  "business administration",
+  "operations",
+  "excel",
+  "systems",
+  "workflow",
+  "workflows",
+  "process",
+  "documentation",
+  "customer service",
+  "hands on",
+  "hands-on",
+  "physical work",
+  "tools",
+  "installation",
+  "install",
+  "low voltage",
+  "electrical",
+  "merchandising",
+  "retail",
+  "transition",
+  "trying to get into",
+  "trying to move into",
+  "seeking to start",
+  "career change",
+  "change careers",
+  "pivot",
+  "pivoting"
+];
+
+function detectHybridProfile(text) {
+  let score = 0;
+
+  hybridSignals.forEach(signal => {
+    if (text.includes(signal)) {
+      score++;
+    }
+  });
+
+  const hasAdminSignal =
+    text.includes("admin") ||
+    text.includes("administrative") ||
+    text.includes("business") ||
+    text.includes("operations") ||
+    text.includes("excel") ||
+    text.includes("workflow") ||
+    text.includes("workflows") ||
+    text.includes("systems");
+
+  const hasHandsOnSignal =
+    text.includes("hands on") ||
+    text.includes("hands-on") ||
+    text.includes("physical work") ||
+    text.includes("tools") ||
+    text.includes("installation") ||
+    text.includes("install") ||
+    text.includes("low voltage") ||
+    text.includes("electrical") ||
+    text.includes("merchandising");
+
+  const hasTransitionSignal =
+    text.includes("trying to get into") ||
+    text.includes("trying to move into") ||
+    text.includes("seeking to start") ||
+    text.includes("transition") ||
+    text.includes("career change") ||
+    text.includes("change careers") ||
+    text.includes("pivot") ||
+    text.includes("pivoting");
+
+  return score >= 3 || (hasAdminSignal && hasHandsOnSignal) || (hasTransitionSignal && score >= 2);
+}
+
+function detectTarget(text) {
+  const intentWords = [
+    "trying to get into",
+    "trying to move into",
+    "want to get into",
+    "want to move into",
+    "seeking to start",
+    "seeking to enter",
+    "transition into",
+    "career change into",
+    "pivot into",
+    "move into",
+    "get into"
+  ];
+
+  const handsOnTargets = [
+    "low voltage",
+    "electrical",
+    "installation",
+    "cabling",
+    "technician",
+    "field work",
+    "trade",
+    "helper",
+    "tools"
+  ];
+
+  const adminTargets = [
+    "admin",
+    "administrative",
+    "operations",
+    "office",
+    "clerical",
+    "coordinator",
+    "dispatcher",
+    "project coordinator",
+    "service coordinator"
+  ];
+
+  const hasIntent = intentWords.some(word => text.includes(word));
+  const hasHandsOnTarget = handsOnTargets.some(word => text.includes(word));
+  const hasAdminTarget = adminTargets.some(word => text.includes(word));
+
+  if (hasIntent && hasHandsOnTarget && !hasAdminTarget) {
+    return { target: "hands-on", source: "stated directly" };
+  }
+
+  if (hasIntent && hasAdminTarget && !hasHandsOnTarget) {
+    return { target: "admin", source: "stated directly" };
+  }
+
+  if (hasIntent && hasHandsOnTarget && hasAdminTarget) {
+    return { target: "split", source: "multiple targets mentioned" };
+  }
+
+  let handsOnScore = 0;
+  let adminScore = 0;
+
+  handsOnTargets.forEach(signal => {
+    if (text.includes(signal)) handsOnScore++;
+  });
+
+  adminTargets.forEach(signal => {
+    if (text.includes(signal)) adminScore++;
+  });
+
+  if (handsOnScore > adminScore && handsOnScore > 0) {
+    return { target: "hands-on", source: "inferred from your wording" };
+  }
+
+  if (adminScore > handsOnScore && adminScore > 0) {
+    return { target: "admin", source: "inferred from your wording" };
+  }
+
+  if (handsOnScore > 0 && adminScore > 0) {
+    return { target: "split", source: "multiple targets mentioned" };
+  }
+
+  return { target: "unclear", source: "not clear yet" };
+}
+
+function targetLabel(target) {
+  if (target === "hands-on") return "Hands-on / Field";
+  if (target === "admin") return "Admin / Operations";
+  if (target === "split") return "Multiple directions";
+  return "Not clear yet";
+}
+
+const failurePatterns = {
+  visibility: [
+    {
+      phrases: [
+        "no response",
+        "no responses",
+        "never hear back",
+        "ghosted",
+        "radio silence",
+        "crickets",
+        "silence",
+        "void",
+        "black hole",
+        "not hearing back",
+        "lack of updates"
+      ],
+      weight: 4,
+      signal: "You are applying, but responses are not coming back."
+    },
+    {
+      phrases: [
+        "applied to 50",
+        "applied to 100",
+        "hundreds of jobs",
+        "300 jobs",
+        "so many applications",
+        "many applications",
+        "applied a lot",
+        "applying a lot",
+        "applied many",
+        "many roles",
+        "100 jobs",
+        "200 apps",
+        "500 apps",
+        "buried in resumes",
+        "buried"
+      ],
+      weight: 3,
+      signal: "High application volume is not turning into movement."
+    },
+    {
+      phrases: [
+        "not being seen",
+        "not seen",
+        "nobody sees it",
+        "before anyone sees",
+        "never reviewed",
+        "not looked at",
+        "not reaching human",
+        "not seen by a human",
+        "seen by a human",
+        "human sees it",
+        "applications disappear",
+        "filtered",
+        "filtered out",
+        "screened out",
+        "auto rejected",
+        "ats",
+        "resume filter",
+        "resume filters",
+        "breaking through the ats"
+      ],
+      weight: 5,
+      signal: "Your application may not be reaching meaningful review."
+    }
+  ],
+
+  timing: [
+    {
+      phrases: [
+        "already filled",
+        "position filled",
+        "position closed",
+        "role closed",
+        "too late",
+        "late response",
+        "replied late",
+        "before she replied",
+        "before they replied",
+        "before he replied",
+        "before the recruiter replied",
+        "rejection was in my email",
+        "rejection sitting in my email",
+        "decision made",
+        "already decided",
+        "never really had a chance"
+      ],
+      weight: 5,
+      signal: "Some opportunities may already be too far along before you are reviewed."
+    },
+    {
+      phrases: [
+        "posted weeks ago",
+        "old posting",
+        "stale posting",
+        "reposted",
+        "evergreen",
+        "ghost listing",
+        "ghost listings",
+        "ghost jobs",
+        "fake jobs"
+      ],
+      weight: 4,
+      signal: "Some postings may be stale, reposted, or not actively hiring."
+    },
+    {
+      phrases: [
+        "internal candidate",
+        "already had someone",
+        "hired internally",
+        "preferred candidate",
+        "someone already picked"
+      ],
+      weight: 5,
+      signal: "Some roles may already have a preferred candidate."
+    }
+  ],
+
+  ranking: [
+    {
+      phrases: [
+        "interview but no offer",
+        "interviews but no offers",
+        "made it to interview",
+        "final round",
+        "rejected after interview",
+        "after interview",
+        "no offers"
+      ],
+      weight: 5,
+      signal: "You may be passing screening but losing later in comparison."
+    },
+    {
+      phrases: [
+        "competitive",
+        "stronger candidates",
+        "better candidates",
+        "qualified is not enough",
+        "being qualified is not enough",
+        "not enough",
+        "not a 100 match",
+        "not the right match",
+        "match isn't right",
+        "match isnt right",
+        "too many applicants",
+        "supply demand",
+        "oversaturated"
+      ],
+      weight: 4,
+      signal: "You may be qualified, but not ranked strongly enough."
+    },
+    {
+      phrases: [
+        "no interviews",
+        "not getting interviews",
+        "0 interviews",
+        "zero interviews"
+      ],
+      weight: 3,
+      signal: "Applications are not converting into interviews."
+    },
+    {
+      phrases: [
+        "not interesting enough",
+        "meh",
+        "meh pile",
+        "limbo",
+        "sit in limbo",
+        "sitting in limbo",
+        "not strong enough",
+        "not picked",
+        "don't get picked",
+        "dont get picked",
+        "not selected",
+        "not moving forward",
+        "move forward",
+        "maybe pile",
+        "middle",
+        "middle zone",
+        "not bad enough",
+        "not weak enough",
+        "not clear no",
+        "not a yes",
+        "not a no",
+        "queue"
+      ],
+      weight: 6,
+      signal: "You may be landing in the middle zone: not clearly rejected, but not clearly chosen."
+    }
+  ],
+
+  translation: [
+    {
+      phrases: [
+        "qualified but",
+        "i qualify",
+        "qualified",
+        "meet the requirements",
+        "meet most of the requirements",
+        "experience should count",
+        "right qualifications"
+      ],
+      weight: 5,
+      signal: "Your experience may be valid, but not clearly translating into the role."
+    },
+    {
+      phrases: [
+        "transferable skills",
+        "same experience",
+        "my experience",
+        "my background",
+        "different title",
+        "career pivot",
+        "pivoting",
+        "varied experience",
+        "broad profile",
+        "career story"
+      ],
+      weight: 4,
+      signal: "Your background may need clearer positioning for the target role."
+    },
+    {
+      phrases: [
+        "not being read correctly",
+        "not being read",
+        "isn't being read",
+        "isnt being read",
+        "read correctly",
+        "doesn't translate",
+        "doesnt translate",
+        "translation of skills",
+        "translate skills",
+        "system doesn't read",
+        "system doesnt read",
+        "wrong wording",
+        "resume wording",
+        "keywords",
+        "key words",
+        "job description keywords",
+        "terms the business understands",
+        "business understands",
+        "not coming through clearly",
+        "clarity",
+        "signal isn't clear",
+        "signal isnt clear",
+        "positioning",
+        "resume positioning",
+        "role fit"
+      ],
+      weight: 5,
+      signal: "There may be a mismatch between your wording and the job description language."
+    }
+  ]
+};
+
+function analyzeUser(input) {
+  const text = normalizeInput(input);
+
+  let scores = {
+    visibility: 0,
+    timing: 0,
+    ranking: 0,
+    translation: 0
+  };
+
+  let signals = [];
+  let contradictions = [];
+
+  let misinterpretationDetected = false;
+  let hybridDetected = detectHybridProfile(text);
+  let targetInfo = detectTarget(text);
+  let target = targetInfo.target;
+  let targetSource = targetInfo.source;
+
+  misinterpretationPatterns.forEach(phrase => {
+    if (text.includes(phrase)) {
+      misinterpretationDetected = true;
+    }
+  });
+
+  for (const type in failurePatterns) {
+    failurePatterns[type].forEach(pattern => {
+      pattern.phrases.forEach(phrase => {
+        if (text.includes(phrase)) {
+          scores[type] += pattern.weight;
+          addSignal(signals, pattern.signal);
+        }
+      });
+    });
+  }
+
+  if (hybridDetected) {
+    scores.translation += 4;
+
+    if (target === "unclear" || target === "split") {
+      scores.ranking += 2;
+      addSignal(signals, "Your background may span more than one career lane.");
+      contradictions.push("Your experience may be useful, but the target direction may not be clear enough yet.");
+    } else {
+      scores.ranking += 1;
+      addSignal(signals, "Your background spans multiple lanes, but a target direction is visible.");
+      addSignal(signals, "The main issue may be aligning your experience to one target role.");
+      contradictions.push("The background is broad, but that is not automatically bad. The question is whether each application clearly supports one role.");
+    }
+  }
+
+  if (text.includes("applied") && (text.includes("no response") || text.includes("no responses") || text.includes("never hear back"))) {
+    scores.visibility += 3;
+    addSignal(signals, "You are applying, but response visibility is weak.");
+  }
+
+  if (
+    (text.includes("qualified") || text.includes("requirements") || text.includes("experience")) &&
+    (text.includes("rejected") || text.includes("no response") || text.includes("no responses") || text.includes("ghosted"))
+  ) {
+    scores.translation += 3;
+    scores.ranking += 1;
+    contradictions.push("You believe your experience should count, but the hiring process is not rewarding it yet.");
+  }
+
+  if (
+    (text.includes("applied a lot") || text.includes("applying a lot") || text.includes("100 jobs") || text.includes("300 jobs") || text.includes("hundreds") || text.includes("many applications")) &&
+    (text.includes("no response") || text.includes("no responses") || text.includes("no interviews") || text.includes("not getting interviews") || text.includes("0 interviews") || text.includes("zero interviews"))
+  ) {
+    scores.visibility += 2;
+    scores.ranking += 2;
+    contradictions.push("High effort is not producing movement, so the issue is probably not only application volume.");
+  }
+
+  if (text.includes("interview") && (text.includes("rejected") || text.includes("no offer") || text.includes("no offers"))) {
+    scores.ranking += 4;
+    addSignal(signals, "You appear to pass early screening but lose later in the process.");
+  }
+
+  if (text.includes("already filled") || text.includes("internal candidate") || text.includes("position filled")) {
+    scores.timing += 4;
+    addSignal(signals, "Timing may be the dominant issue.");
+  }
+
+  if (
+    text.includes("not rejected") ||
+    text.includes("not moving forward") ||
+    text.includes("limbo") ||
+    text.includes("meh") ||
+    text.includes("maybe pile")
+  ) {
+    scores.ranking += 4;
+    addSignal(signals, "The situation resembles a deferred state: not rejected, but not advanced.");
+  }
+
+  if (misinterpretationDetected) {
+    contradictions.push("It may feel random, but hiring outcomes are usually shaped by hidden signals, timing, ranking, visibility, or role fit.");
+    addSignal(signals, "Your wording suggests the process feels random or hard to explain.");
+  }
+
+  const sorted = getSortedFailures(scores);
+  const strongestScore = sorted[0][1];
+  const secondScore = sorted[1][1];
+
+  const onlyRandomLanguage =
+    misinterpretationDetected &&
+    signals.length <= 1 &&
+    strongestScore < 4 &&
+    !hybridDetected;
+
+  const weakSignal =
+    strongestScore === 0 ||
+    onlyRandomLanguage ||
+    (strongestScore < 4 && signals.length <= 1);
+
+  let primary = weakSignal ? "insufficient" : sorted[0][0];
+  let secondary = weakSignal ? "unknown" : (secondScore > 0 ? sorted[1][0] : chooseDefaultSecondary(primary, misinterpretationDetected));
+
+  const confidence = weakSignal
+    ? "Low — more context needed"
+    : getConfidence(strongestScore, secondScore, signals.length);
+
+  const diagnosisStatus = weakSignal
+    ? "More context needed"
+    : "Pattern noticed";
+
+  const evidenceStrength = getEvidenceStrength(strongestScore, secondScore, signals.length, weakSignal);
+
+  return {
+    diagnosisStatus,
+    primaryType: primary,
+    secondaryType: secondary,
+    primaryIssue: userFriendlyLabel(primary),
+    secondaryIssue: userFriendlyLabel(secondary),
+    confidence,
+    evidenceStrength,
+    summaryInsight: summaryInsight(primary, weakSignal, misinterpretationDetected, hybridDetected, target),
+    signals: signals.length ? signals : ["No strong pattern detected yet. More detail is needed about roles, resume fit, interviews, rejection timing, or job descriptions."],
+    contradiction: contradictions[0] || "No major mismatch detected yet.",
+    whyThisIsHappening: explain(primary, secondary, weakSignal, misinterpretationDetected, hybridDetected, target),
+    realityCheck: reality(primary, misinterpretationDetected, hybridDetected, target),
+    whatThisMeans: whatThisMeans(primary, misinterpretationDetected, hybridDetected, target),
+    nextTest: nextTest(primary, hybridDetected, target),
+    nextActions: nextActions(primary, hybridDetected, target),
+    recommendedPath: recommendedPath(primary, hybridDetected, target),
+    missingInfo: missingInfo(primary, target),
+    simplePattern: simplePattern(primary, secondary),
+    hybridDetected,
+    target,
+    targetSource,
+    scores
+  };
+}
+
+function chooseDefaultSecondary(primary, misinterpretationDetected) {
+  if (misinterpretationDetected) return "ranking";
+  if (primary === "visibility") return "ranking";
+  if (primary === "ranking") return "visibility";
+  if (primary === "timing") return "visibility";
+  if (primary === "translation") return "visibility";
+  return "unknown";
+}
+
+function addSignal(signals, signal) {
+  if (!signals.includes(signal)) {
+    signals.push(signal);
+  }
+}
+
+function getSortedFailures(scores) {
+  const priority = {
+    ranking: 4,
+    visibility: 3,
+    translation: 2,
+    timing: 1
+  };
+
+  return Object.entries(scores).sort((a, b) => {
+    if (b[1] !== a[1]) return b[1] - a[1];
+    return priority[b[0]] - priority[a[0]];
+  });
+}
+
+function userFriendlyLabel(type) {
+  const labels = {
+    visibility: "Your application may not be getting seen clearly.",
+    timing: "You may be applying too late or to stale roles.",
+    ranking: "You may be qualified, but not standing out enough.",
+    translation: "Your experience may not be translating into the job’s language.",
+    insufficient: "There is not enough information yet.",
+    unknown: "Still unclear."
+  };
+
+  return labels[type] || "Still unclear.";
+}
+
+function getConfidence(primaryScore, secondaryScore, signalCount) {
+  if (primaryScore >= 8 && signalCount >= 3) return "High — several clues point the same way";
+  if (primaryScore >= 4) return "Medium — there is a clear pattern, but more context would help";
+  return "Low — weak pattern";
+}
+
+function getEvidenceStrength(primaryScore, secondaryScore, signalCount, weakSignal) {
+  if (weakSignal) {
+    return {
+      status: "Weak",
+      explanation: "There are not enough concrete details yet to identify the main issue.",
+      strongestScore: primaryScore,
+      secondaryScore,
+      signalCount
+    };
+  }
+
+  if (primaryScore >= 8 && signalCount >= 3) {
+    return {
+      status: "Strong",
+      explanation: "Several details point toward the same issue.",
+      strongestScore: primaryScore,
+      secondaryScore,
+      signalCount
+    };
+  }
+
+  if (primaryScore >= 4) {
+    return {
+      status: "Moderate",
+      explanation: "A clear pattern is present, but more context would improve the answer.",
+      strongestScore: primaryScore,
+      secondaryScore,
+      signalCount
+    };
+  }
+
+  return {
+    status: "Weak",
+    explanation: "The pattern exists, but it is not strong enough to treat as a confident answer.",
+    strongestScore: primaryScore,
+    secondaryScore,
+    signalCount
+  };
+}
+
+function summaryInsight(type, weakSignal, misinterpretationDetected, hybridDetected, target) {
+  if (type === "insufficient") {
+    return "I can’t identify the main issue yet. Your situation shows frustration or uncertainty, but I need more details before saying whether the issue is the resume, the role target, timing, visibility, or competition.";
+  }
+
+  if (hybridDetected && target === "hands-on") {
+    return "Your background spans multiple lanes, but your target appears to be hands-on or field work. The main task is making every part of your experience support that target.";
+  }
+
+  if (hybridDetected && target === "admin") {
+    return "Your background spans multiple lanes, but your target appears to be admin or operations. The main task is making your experience read clearly for that lane.";
+  }
+
+  if (hybridDetected && target === "split") {
+    return "You may be aiming at more than one direction at once. That can make your resume harder to understand because the reader may not know which version of you they are evaluating.";
+  }
+
+  const insights = {
+    visibility: "The issue may be that your applications are not reaching a real review point.",
+    timing: "The issue may be that some roles are already too far along before you apply.",
+    ranking: "The issue may be that you are qualified, but not being ranked as one of the clearest matches.",
+    translation: "The issue may be that your experience is real, but it is not being expressed in the language the job description expects."
+  };
+
+  return insights[type];
+}
+
+function explain(primary, secondary, weakSignal, misinterpretationDetected, hybridDetected, target) {
+  if (primary === "insufficient") {
+    return "Right now, the input sounds more like a broad outcome than a specific pattern. I would avoid making a big resume or strategy change until we compare your resume against the jobs you are targeting.";
+  }
+
+  if (hybridDetected && target === "hands-on") {
+    return "A broad background can help, but the resume should lead with field-readiness, reliability, tools, following instructions, installation exposure, and hands-on execution. Admin details should support that story, not compete with it.";
+  }
+
+  if (hybridDetected && target === "admin") {
+    return "A broad background can help, but the resume should lead with systems, documentation, accuracy, communication, scheduling, workflow, and operations support. Hands-on work should be translated into reliability and execution.";
+  }
+
+  if (hybridDetected && target === "split") {
+    return "The profile contains more than one possible direction. That can weaken the signal because employers usually want to quickly understand why you fit their specific role.";
+  }
+
+  const explanations = {
+    visibility: "If applications disappear with no response, the problem may happen before a real person evaluates you. That could mean job-board filtering, weak keyword match, stale postings, or applying where there is already too much competition.",
+    timing: "If the role is already filled, stale, reposted, or decided, your resume may not be the main issue. The problem may be entering the process after the real decision window has already passed.",
+    ranking: "If you are getting some consideration but no movement, you may be close but not easy enough to choose. The resume or interview may need clearer proof, stronger role fit, or tighter positioning.",
+    translation: "If your experience should count but does not seem to, your resume may not be translating your background into the employer’s exact language, tools, tasks, and outcomes."
+  };
+
+  return explanations[primary];
+}
+
+function reality(type, misinterpretationDetected, hybridDetected, target) {
+  if (type === "insufficient") {
+    return "This does not mean nothing is wrong. It means the main issue has not been isolated yet.";
+  }
+
+  if (hybridDetected && target !== "unclear" && target !== "split") {
+    return "A broad background is not automatically bad. The next step is alignment: make the whole application support one target role.";
+  }
+
+  if (hybridDetected) {
+    return "Hybrid is not the problem. Unclear routing is the problem.";
+  }
+
+  const checks = {
+    visibility: "The problem may not be your ability. The system may not be seeing you clearly enough.",
+    timing: "The problem may not be effort. You may be entering too late or applying to roles that are not truly open.",
+    ranking: "The problem may not be qualification. You may be landing in the middle instead of becoming an obvious yes.",
+    translation: "The problem may not be your experience. The system may not understand it in the form you are presenting it."
+  };
+
+  return checks[type];
+}
+
+function whatThisMeans(type, misinterpretationDetected, hybridDetected, target) {
+  if (type === "insufficient") {
+    return "Before applying to more jobs or rewriting everything, gather better evidence. One resume and one job description will usually tell more than the application count alone.";
+  }
+
+  if (hybridDetected && target === "hands-on") {
+    return "You do not need to remove your admin or systems background. You need to use it as support for a hands-on identity: organized, reliable, accurate, field-ready, and able to follow structured instructions.";
+  }
+
+  if (hybridDetected && target === "admin") {
+    return "You do not need to remove hands-on experience. You need to translate it into admin and operations language: execution, organization, accuracy, process adherence, and communication.";
+  }
+
+  if (hybridDetected && target === "split") {
+    return "You may need two resume versions: one for hands-on roles and one for admin or operations roles. One version should not try to sell both equally.";
+  }
+
+  const meanings = {
+    visibility: "You probably do not only need more applications. You need applications that reach a visible review point.",
+    timing: "You probably need fresher postings, faster follow-up, and fewer stale listings.",
+    ranking: "You may need to make your target title, tools, proof, and outcomes more obvious.",
+    translation: "You may need to rewrite your experience around one job description at a time instead of sending the same version everywhere."
+  };
+
+  return meanings[type];
+}
+
+function missingInfo(primary, target) {
+  if (primary === "insufficient") {
+    return [
+      "What job titles are you applying to?",
+      "How many applications have you sent?",
+      "How many interviews have you received?",
+      "Are rejections instant, delayed, or silent?",
+      "Are you using one resume or multiple versions?",
+      "Can you compare one resume with one job description?"
+    ];
+  }
+
+  return [
+    "One resume version you used",
+    "One job description you applied to",
+    "How old the posting was when you applied",
+    "Whether you applied through a job board, company site, recruiter, or referral",
+    "What happened after applying"
+  ];
+}
+
+function nextTest(primary, hybridDetected, target) {
+  if (primary === "insufficient") {
+    return "Compare one resume against one job description. That will show whether the issue is likely wording, role fit, timing, ranking, or something else.";
+  }
+
+  if (hybridDetected && target === "split") {
+    return "Create two mini versions of your profile: one for hands-on roles and one for admin or operations roles. Then compare which version creates a clearer match.";
+  }
+
+  if (hybridDetected) {
+    return "Take one target role and rewrite the top summary and skills so every line supports that role. Then compare it to the job description.";
+  }
+
+  const tests = {
+    visibility: "Apply to 10 fresh postings through company websites or recruiter contact, then compare response rate against job-board-only applications.",
+    timing: "Track posting age for the next 20 applications. Separate roles posted in the last 72 hours from older or reposted roles.",
+    ranking: "Compare your resume to one job description and mark where your proof is weaker, less specific, or less direct than the job asks for.",
+    translation: "Take one job description and rewrite your resume summary, skills, and bullets using the employer’s language, then test that version only on similar roles."
+  };
+
+  return tests[primary];
+}
+
+function nextActions(primary, hybridDetected, target) {
+  if (primary === "insufficient") {
+    return [
+      "Pick one job title you are targeting.",
+      "Choose one job description.",
+      "Compare your resume against that posting.",
+      "Track whether the issue is no response, rejection, interview, or no offer."
+    ];
+  }
+
+  if (hybridDetected && target === "hands-on") {
+    return [
+      "Lead with hands-on work, tools, reliability, and field-readiness.",
+      "Move admin details into support language: tracking, accuracy, process discipline.",
+      "Use one resume version only for hands-on or low-voltage roles."
+    ];
+  }
+
+  if (hybridDetected && target === "admin") {
+    return [
+      "Lead with documentation, workflow, communication, scheduling, and operations support.",
+      "Translate hands-on work into reliability, execution, and process adherence.",
+      "Use one resume version only for admin, coordinator, or operations roles."
+    ];
+  }
+
+  if (hybridDetected && target === "split") {
+    return [
+      "Create one resume version for hands-on roles.",
+      "Create one resume version for admin or operations roles.",
+      "Do not use the same summary for both versions."
+    ];
+  }
+
+  const actions = {
+    visibility: [
+      "Prioritize newer postings.",
+      "Apply on company websites when possible.",
+      "Use recruiter contact or staffing agencies when available.",
+      "Track which application sources produce responses."
+    ],
+    timing: [
+      "Apply earlier in the posting cycle.",
+      "Avoid stale or repeatedly reposted jobs.",
+      "Follow up quickly when a recruiter responds.",
+      "Track posting age before applying."
+    ],
+    ranking: [
+      "Narrow the target role.",
+      "Make the target title obvious.",
+      "Add stronger proof for the job’s top requirements.",
+      "Remove details that distract from the target role."
+    ],
+    translation: [
+      "Use the job description’s wording.",
+      "Rewrite bullets around tasks, tools, and outcomes.",
+      "Create different resume versions for different role types.",
+      "Compare resume language directly against the posting."
+    ]
+  };
+
+  return actions[primary] || ["Gather more context and test one change at a time."];
+}
+
+function recommendedPath(primary, hybridDetected, target) {
+  if (primary === "insufficient") {
+    return "Start with evidence. One resume plus one job description is the fastest way to understand what is happening.";
+  }
+
+  if (hybridDetected && target === "hands-on") {
+    return "Recommended path: focus the application around hands-on or field roles. Use admin experience only as support.";
+  }
+
+  if (hybridDetected && target === "admin") {
+    return "Recommended path: focus the application around admin, coordinator, dispatcher, service, or operations support roles. Use hands-on work as proof of reliability.";
+  }
+
+  if (hybridDetected && target === "split") {
+    return "Recommended path: split the search into two lanes and test them separately.";
+  }
+
+  const paths = {
+    visibility: "Recommended path: improve where and how the application enters the hiring process.",
+    timing: "Recommended path: prioritize fresh openings and faster entry.",
+    ranking: "Recommended path: make yourself easier to rank as a direct match.",
+    translation: "Recommended path: translate your experience into the exact role language."
+  };
+
+  return paths[primary];
+}
+
+function simplePattern(primary, secondary) {
+  if (primary === "insufficient") {
+    return "More context needed";
+  }
+
+  const names = {
+    visibility: "Visibility",
+    timing: "Timing",
+    ranking: "Ranking",
+    translation: "Translation",
+    unknown: "Unclear"
+  };
+
+  return names[primary] + " may be the main issue" + (secondary !== "unknown" ? " with " + names[secondary].toLowerCase() + " also involved." : ".");
+}
+
+function renderResult(data) {
+  let html = "";
+
+  // 1. Immediate understanding
+  html += "<div class='card highlight'>";
+  html += "<div class='section-label'>Here’s what seems to be happening</div>";
+  html += data.summaryInsight;
+  html += "</div>";
+
+  // 2. Main issue
+  html += "<div class='card highlight'>";
+  html += "<div class='section-label'>Most likely issue</div>";
+  html += "<b>Main issue:</b> " + data.primaryIssue + "<br>";
+  html += "<b>Possible secondary issue:</b> " + data.secondaryIssue + "<br>";
+  html += "<b>Confidence:</b> " + data.confidence;
+  html += "</div>";
+
+  // 3. Best next test
+  html += "<div class='dark'>";
+  html += "<b>Best next test</b><br>";
+  html += data.nextTest;
+  html += "</div>";
+
+  // 4. Evidence noticed
+  html += "<div class='card'>";
+  html += "<div class='section-label'>What I noticed</div>";
+  html += "<ul>";
+  data.signals.forEach(signal => {
+    html += "<li>" + signal + "</li>";
+  });
+  html += "</ul>";
+  html += "</div>";
+
+  // 5. Missing context
+  html += "<div class='card warning'>";
+  html += "<div class='section-label'>What is still unclear</div>";
+  html += "<ul>";
+  data.missingInfo.forEach(item => {
+    html += "<li>" + item + "</li>";
+  });
+  html += "</ul>";
+  html += "</div>";
+
+  // 6. Action list
+  html += "<div class='card highlight'>";
+  html += "<div class='section-label'>What to do next</div>";
+  html += "<ul>";
+  data.nextActions.forEach(action => {
+    html += "<li>" + action + "</li>";
+  });
+  html += "</ul>";
+  html += "</div>";
+
+  // 7. Emotional reassurance / trust builder
+  html += "<div class='card soft'>";
+  html += "<div class='section-label'>Reality check</div>";
+  html += data.realityCheck;
+  html += "</div>";
+
+  // 8. Deeper explanation
+  html += "<div class='card'>";
+  html += "<div class='section-label'>Why this may be happening</div>";
+  html += data.whyThisIsHappening;
+  html += "</div>";
+
+  // 9. Meaning
+  html += "<div class='card'>";
+  html += "<div class='section-label'>What this means</div>";
+  html += data.whatThisMeans;
+  html += "</div>";
+
+  // 10. Direction
+  html += "<div class='card'>";
+  html += "<div class='section-label'>Recommended direction</div>";
+  html += data.recommendedPath;
+  html += "</div>";
+
+  // 11. Target clarity
+  html += "<div class='card'>";
+  html += "<div class='section-label'>Role target clarity</div>";
+  html += "<b>Detected direction:</b> " + targetLabel(data.target) + "<br>";
+  html += "<b>How it was detected:</b> " + data.targetSource;
+  html += "</div>";
+
+  // 12. Collapsed diagnostic proof
+  html += "<details class='details'>";
+  html += "<summary>Diagnostic notes</summary>";
+  html += "<div class='card'>";
+  html += "<b>Status:</b> " + data.diagnosisStatus + "<br>";
+  html += "<b>Evidence:</b> " + data.evidenceStrength.status + "<br>";
+  html += "<b>Pattern:</b> " + data.simplePattern + "<br>";
+  html += "<b>Evidence note:</b> " + data.evidenceStrength.explanation + "<br>";
+  html += "<b>Signal count:</b> " + data.evidenceStrength.signalCount + "<br>";
+  html += "<b>Strongest score:</b> " + data.evidenceStrength.strongestScore + "<br>";
+  html += "<b>Secondary score:</b> " + data.evidenceStrength.secondaryScore;
+  html += "<div class='badge-row'>";
+
+  if (data.primaryType === "insufficient") {
+    html += "<span class='badge badge-red'>More context needed</span>";
+  } else {
+    html += "<span class='badge badge-blue'>" + data.simplePattern + "</span>";
+  }
+
+  if (data.hybridDetected) {
+    html += "<span class='badge badge-orange'>Hybrid background</span>";
+  }
+
+  html += "<span class='badge'>" + targetLabel(data.target) + "</span>";
+  html += "</div>";
+  html += "</div>";
+  html += "</details>";
+
+  console.log("Pathway Translator Debug Scores:", data.scores);
+
+  return html;
+}
+</script>
+
+</body>
+</html>
