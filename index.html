@@ -116,6 +116,49 @@ button {
   line-height: 1.55;
 }
 
+.transition-bridge {
+  background: #eff6ff;
+  border: 1px solid #bfdbfe;
+}
+
+.bridge-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  gap: 10px;
+  margin-top: 8px;
+}
+
+.bridge-column {
+  background: rgba(255,255,255,0.75);
+  border: 1px solid #dbeafe;
+  border-radius: 10px;
+  padding: 10px;
+  font-size: 14px;
+}
+
+.bridge-column b {
+  display: block;
+  margin-bottom: 6px;
+}
+
+.role-list {
+  margin-top: 8px;
+  line-height: 1.7;
+}
+
+.role-fit {
+  display: inline-block;
+  min-width: 70px;
+  font-weight: bold;
+  color: #1d4ed8;
+}
+
+@media (max-width: 860px) {
+  .bridge-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
 .helper-note {
   margin-top: 8px;
   font-size: 13px;
@@ -268,7 +311,7 @@ ul {
       </div>
 
       <div class="sample-list">
-        <div class="section-label">Try an example</div>
+        <div class="section-label">Not sure what to write? Try an example</div>
 
         <div class="sample" onclick="loadSample(0)">100 applications, no responses</div>
         <div class="sample" onclick="loadSample(1)">Applied late / position already filled</div>
@@ -440,7 +483,145 @@ function detectHybridProfile(text) {
   return score >= 3 || (hasAdminSignal && hasHandsOnSignal) || (hasTransitionSignal && score >= 2);
 }
 
+function containsAny(text, list) {
+  return list.some(item => text.includes(item));
+}
+
+const handsOnTargets = [
+  "low voltage",
+  "electrical",
+  "installation",
+  "cabling",
+  "technician",
+  "field work",
+  "field",
+  "trade",
+  "helper",
+  "tools",
+  "hands on",
+  "hands-on"
+];
+
+const adminTargets = [
+  "admin",
+  "administrative",
+  "operations",
+  "office",
+  "clerical",
+  "coordinator",
+  "dispatcher",
+  "project coordinator",
+  "project coordination",
+  "service coordinator",
+  "operations coordinator",
+  "operations support",
+  "project support",
+  "workflow",
+  "documentation",
+  "scheduling"
+];
+
+const transitionWords = [
+  "moving from",
+  "move from",
+  "moving into",
+  "move into",
+  "transitioning from",
+  "transitioning into",
+  "transition into",
+  "switching from",
+  "switching into",
+  "changing from",
+  "changing careers",
+  "career change",
+  "pivoting from",
+  "pivoting into",
+  "pivot into",
+  "trying to get into",
+  "trying to move into",
+  "want to get into",
+  "want to move into",
+  "looking to get into",
+  "looking to move into"
+];
+
+function detectDestinationAfterIntent(text) {
+  const destinationPatterns = [
+    /(?:into|toward|towards|to|for)\s+([a-z0-9\s]{3,80})/,
+    /(?:targeting|applying to|interested in)\s+([a-z0-9\s]{3,80})/
+  ];
+
+  for (const pattern of destinationPatterns) {
+    const match = text.match(pattern);
+    if (!match) continue;
+
+    const destination = match[1];
+
+    if (containsAny(destination, adminTargets)) {
+      return { target: "admin", source: "stated destination" };
+    }
+
+    if (containsAny(destination, handsOnTargets)) {
+      return { target: "hands-on", source: "stated destination" };
+    }
+  }
+
+  return null;
+}
+
+function detectCareerTransition(text) {
+  const hasTransitionLanguage = containsAny(text, transitionWords);
+  const hasFromToLanguage =
+    (text.includes("from") && (text.includes("into") || text.includes("to") || text.includes("toward") || text.includes("towards")));
+
+  const hasCurrentHandsOn = containsAny(text, handsOnTargets);
+  const hasCurrentAdmin = containsAny(text, adminTargets);
+
+  const destination = detectDestinationAfterIntent(text);
+
+  if ((hasTransitionLanguage || hasFromToLanguage) && destination) {
+    return {
+      detected: true,
+      destination: destination.target,
+      source: destination.source
+    };
+  }
+
+  if ((hasTransitionLanguage || hasFromToLanguage) && hasCurrentHandsOn && hasCurrentAdmin) {
+    return {
+      detected: true,
+      destination: "split",
+      source: "transition language with multiple directions"
+    };
+  }
+
+  if (hasTransitionLanguage) {
+    return {
+      detected: true,
+      destination: "unclear",
+      source: "transition language detected"
+    };
+  }
+
+  return {
+    detected: false,
+    destination: "unclear",
+    source: "not a transition pattern"
+  };
+}
+
 function detectTarget(text) {
+  const transition = detectCareerTransition(text);
+
+  // Career-transition rule:
+  // If the user states a destination, the destination role takes priority over the current background.
+  if (transition.detected && transition.destination !== "unclear") {
+    return { target: transition.destination, source: transition.source };
+  }
+
+  const hasHandsOnTarget = containsAny(text, handsOnTargets);
+  const hasAdminTarget = containsAny(text, adminTargets);
+
   const intentWords = [
     "trying to get into",
     "trying to move into",
@@ -452,36 +633,11 @@ function detectTarget(text) {
     "career change into",
     "pivot into",
     "move into",
-    "get into"
+    "get into",
+    "interested in"
   ];
 
-  const handsOnTargets = [
-    "low voltage",
-    "electrical",
-    "installation",
-    "cabling",
-    "technician",
-    "field work",
-    "trade",
-    "helper",
-    "tools"
-  ];
-
-  const adminTargets = [
-    "admin",
-    "administrative",
-    "operations",
-    "office",
-    "clerical",
-    "coordinator",
-    "dispatcher",
-    "project coordinator",
-    "service coordinator"
-  ];
-
-  const hasIntent = intentWords.some(word => text.includes(word));
-  const hasHandsOnTarget = handsOnTargets.some(word => text.includes(word));
-  const hasAdminTarget = adminTargets.some(word => text.includes(word));
+  const hasIntent = containsAny(text, intentWords);
 
   if (hasIntent && hasHandsOnTarget && !hasAdminTarget) {
     return { target: "hands-on", source: "stated directly" };
@@ -506,12 +662,12 @@ function detectTarget(text) {
     if (text.includes(signal)) adminScore++;
   });
 
-  if (handsOnScore > adminScore && handsOnScore > 0) {
-    return { target: "hands-on", source: "inferred from your wording" };
-  }
-
   if (adminScore > handsOnScore && adminScore > 0) {
     return { target: "admin", source: "inferred from your wording" };
+  }
+
+  if (handsOnScore > adminScore && handsOnScore > 0) {
+    return { target: "hands-on", source: "inferred from your wording" };
   }
 
   if (handsOnScore > 0 && adminScore > 0) {
@@ -520,6 +676,7 @@ function detectTarget(text) {
 
   return { target: "unclear", source: "not clear yet" };
 }
+
 
 function targetLabel(target) {
   if (target === "hands-on") return "Hands-on / Field";
@@ -798,6 +955,7 @@ function analyzeUser(input) {
 
   let misinterpretationDetected = false;
   let hybridDetected = detectHybridProfile(text);
+  let careerTransition = detectCareerTransition(text);
   let targetInfo = detectTarget(text);
   let target = targetInfo.target;
   let targetSource = targetInfo.source;
@@ -817,6 +975,25 @@ function analyzeUser(input) {
         }
       });
     });
+  }
+
+  if (careerTransition.detected) {
+    scores.translation += 5;
+    scores.ranking += 1;
+    hybridDetected = true;
+
+    if (target === "admin") {
+      addSignal(signals, "You stated a transition into admin, operations, office, coordinator, dispatch, or project-support work.");
+      addSignal(signals, "Your current background needs to be translated toward the destination role, not judged only by the past title.");
+      contradictions.push("The issue may not be whether your old experience counts. The issue may be whether employers can see how it connects to the target role.");
+    } else if (target === "hands-on") {
+      addSignal(signals, "You stated a transition into hands-on or field work.");
+      addSignal(signals, "Your non-field experience needs to be framed as reliability, execution, learning ability, and field readiness.");
+      contradictions.push("The issue may not be whether your background is useful. The issue may be whether it is being framed for the field role.");
+    } else {
+      addSignal(signals, "You appear to be trying to transition, but the destination role is not clear enough yet.");
+      contradictions.push("The transition may be valid, but the target lane needs to be clearer before the resume can support it.");
+    }
   }
 
   if (hybridDetected) {
@@ -927,15 +1104,131 @@ function analyzeUser(input) {
     whatThisMeans: whatThisMeans(primary, misinterpretationDetected, hybridDetected, target),
     nextTest: nextTest(primary, hybridDetected, target),
     nextActions: nextActions(primary, hybridDetected, target),
-    recommendedPath: recommendedPath(primary, hybridDetected, target),
-    missingInfo: missingInfo(primary, target),
+    recommendedPath: recommendedPath(primary, hybridDetected, target, careerTransition),
+    missingInfo: missingInfo(primary, target, careerTransition),
     simplePattern: simplePattern(primary, secondary),
+    careerTransition: careerTransition.detected,
+    careerBridge: careerBridge(target),
+    transitionSummary: transitionSummary(target),
+    transitionRoleFits: transitionRoleFits(target),
     hybridDetected,
     target,
     targetSource,
     scores
   };
 }
+
+
+function careerBridge(target) {
+  if (target === "admin") {
+    return {
+      current: [
+        "Field or hands-on execution",
+        "Customer or team communication",
+        "Following instructions, safety, and process",
+        "Materials, tasks, and job-site coordination"
+      ],
+      transferable: [
+        "Documentation",
+        "Scheduling / coordination",
+        "Workflow follow-through",
+        "Problem solving",
+        "Communication",
+        "Process adherence"
+      ],
+      target: [
+        "Project Coordinator",
+        "Operations Coordinator",
+        "Service Coordinator",
+        "Dispatcher",
+        "Administrative Project Support"
+      ]
+    };
+  }
+
+  if (target === "hands-on") {
+    return {
+      current: [
+        "Admin, customer service, or operations work",
+        "Documentation and workflow tracking",
+        "Reliability and process discipline",
+        "Communication across teams"
+      ],
+      transferable: [
+        "Following structured instructions",
+        "Accuracy",
+        "Reliability",
+        "Task ownership",
+        "Field readiness",
+        "Learning new tools"
+      ],
+      target: [
+        "Low Voltage Helper",
+        "Install Technician",
+        "Field Technician",
+        "Cabling Technician",
+        "Trade Helper"
+      ]
+    };
+  }
+
+  return {
+    current: [
+      "Mixed experience across more than one lane",
+      "Some practical experience",
+      "Some communication or process experience"
+    ],
+    transferable: [
+      "Reliability",
+      "Communication",
+      "Execution",
+      "Organization",
+      "Problem solving"
+    ],
+    target: [
+      "Pick one target lane first",
+      "Test one resume per lane",
+      "Compare response rate"
+    ]
+  };
+}
+
+function transitionSummary(target) {
+  if (target === "admin") {
+    return "You are not simply asking whether your past experience is good. You are trying to make field or hands-on experience readable for office-based coordination, operations, dispatch, or project-support roles.";
+  }
+
+  if (target === "hands-on") {
+    return "You are trying to make admin, service, or operations experience read as practical, reliable, and field-ready for hands-on roles.";
+  }
+
+  return "You appear to be in a transition point. The next step is choosing one target lane so your experience can be translated clearly.";
+}
+
+function transitionRoleFits(target) {
+  if (target === "admin") {
+    return [
+      { role: "Project Coordinator", fit: "Strong", reason: "connects field exposure, documentation, scheduling, and communication" },
+      { role: "Service Coordinator", fit: "Strong", reason: "connects customer communication, dispatch-style coordination, and follow-through" },
+      { role: "Operations Coordinator", fit: "Good", reason: "connects process, workflow, materials, and execution" },
+      { role: "Dispatcher", fit: "Good", reason: "connects communication, urgency, organization, and routing of work" },
+      { role: "Administrative Project Support", fit: "Good", reason: "connects documentation, accuracy, and project follow-up" }
+    ];
+  }
+
+  if (target === "hands-on") {
+    return [
+      { role: "Low Voltage Helper", fit: "Strong", reason: "connects tools, following instructions, field readiness, and reliability" },
+      { role: "Install Technician", fit: "Good", reason: "connects hands-on execution and ability to learn structured work" },
+      { role: "Field Technician", fit: "Good", reason: "connects customer communication, task completion, and practical work" }
+    ];
+  }
+
+  return [
+    { role: "One target lane", fit: "Needed", reason: "the system needs a clear destination before it can translate the background" }
+  ];
+}
+
 
 function chooseDefaultSecondary(primary, misinterpretationDetected) {
   if (misinterpretationDetected) return "ranking";
@@ -1030,14 +1323,13 @@ function summaryInsight(type, weakSignal, misinterpretationDetected, hybridDetec
     return "I can’t identify the main issue yet. Your situation shows frustration or uncertainty, but I need more details before saying whether the issue is the resume, the role target, timing, visibility, or competition.";
   }
 
+  if (hybridDetected && target === "admin") {
+    return "Your current experience may be useful for office-based coordination, operations, dispatch, or project-support roles, but employers may still be reading it as unrelated unless the connection is made explicit.";
+  }
+
   if (hybridDetected && target === "hands-on") {
     return "Your background spans multiple lanes, but your target appears to be hands-on or field work. The main task is making every part of your experience support that target.";
   }
-
-  if (hybridDetected && target === "admin") {
-    return "Your background spans multiple lanes, but your target appears to be admin or operations. The main task is making your experience read clearly for that lane.";
-  }
-
   if (hybridDetected && target === "split") {
     return "You may be aiming at more than one direction at once. That can make your resume harder to understand because the reader may not know which version of you they are evaluating.";
   }
@@ -1062,7 +1354,7 @@ function explain(primary, secondary, weakSignal, misinterpretationDetected, hybr
   }
 
   if (hybridDetected && target === "admin") {
-    return "A broad background can help, but the resume should lead with systems, documentation, accuracy, communication, scheduling, workflow, and operations support. Hands-on work should be translated into reliability and execution.";
+    return "Career transition requires a bridge. The resume should not only list the old job tasks. It should show how field work, customer contact, documentation, safety, materials, and follow-through connect to coordination, scheduling, operations support, and project communication.";
   }
 
   if (hybridDetected && target === "split") {
@@ -1112,7 +1404,7 @@ function whatThisMeans(type, misinterpretationDetected, hybridDetected, target) 
   }
 
   if (hybridDetected && target === "admin") {
-    return "You do not need to remove hands-on experience. You need to translate it into admin and operations language: execution, organization, accuracy, process adherence, and communication.";
+    return "You do not need to erase hands-on experience. You need to make the bridge obvious: field execution becomes follow-through, job-site communication becomes coordination, materials or task tracking becomes operations support, and safety/process work becomes documentation and compliance awareness.";
   }
 
   if (hybridDetected && target === "split") {
@@ -1129,7 +1421,7 @@ function whatThisMeans(type, misinterpretationDetected, hybridDetected, target) 
   return meanings[type];
 }
 
-function missingInfo(primary, target) {
+function missingInfo(primary, target, careerTransition) {
   if (primary === "insufficient") {
     return [
       "What job titles are you applying to?",
@@ -1138,6 +1430,16 @@ function missingInfo(primary, target) {
       "Are rejections instant, delayed, or silent?",
       "Are you using one resume or multiple versions?",
       "Can you compare one resume with one job description?"
+    ];
+  }
+
+  if (careerTransition && target === "admin") {
+    return [
+      "The exact target role you want first",
+      "One job description for that target role",
+      "Which parts of your current experience you are trying to transfer",
+      "One resume version you used",
+      "What happened after applying"
     ];
   }
 
@@ -1157,6 +1459,10 @@ function nextTest(primary, hybridDetected, target) {
 
   if (hybridDetected && target === "split") {
     return "Create two mini versions of your profile: one for hands-on roles and one for admin or operations roles. Then compare which version creates a clearer match.";
+  }
+
+  if (hybridDetected && target === "admin") {
+    return "Pick one destination role, such as Project Coordinator or Service Coordinator. Rewrite the summary, skills, and top bullets so they translate your field experience into coordination, documentation, scheduling, communication, and operations support.";
   }
 
   if (hybridDetected) {
@@ -1193,9 +1499,10 @@ function nextActions(primary, hybridDetected, target) {
 
   if (hybridDetected && target === "admin") {
     return [
-      "Lead with documentation, workflow, communication, scheduling, and operations support.",
-      "Translate hands-on work into reliability, execution, and process adherence.",
-      "Use one resume version only for admin, coordinator, or operations roles."
+      "Choose one first target: Project Coordinator, Service Coordinator, Dispatcher, Operations Coordinator, or Administrative Project Support.",
+      "Translate field work into coordination language: documentation, scheduling, follow-up, communication, materials, safety, and issue resolution.",
+      "Rewrite the top summary so the employer immediately sees the destination role, not only the past job title.",
+      "Use one resume version only for the chosen office, coordinator, dispatch, or operations lane."
     ];
   }
 
@@ -1237,7 +1544,7 @@ function nextActions(primary, hybridDetected, target) {
   return actions[primary] || ["Gather more context and test one change at a time."];
 }
 
-function recommendedPath(primary, hybridDetected, target) {
+function recommendedPath(primary, hybridDetected, target, careerTransition) {
   if (primary === "insufficient") {
     return "Start with evidence. One resume plus one job description is the fastest way to understand what is happening.";
   }
@@ -1247,7 +1554,7 @@ function recommendedPath(primary, hybridDetected, target) {
   }
 
   if (hybridDetected && target === "admin") {
-    return "Recommended path: focus the application around admin, coordinator, dispatcher, service, or operations support roles. Use hands-on work as proof of reliability.";
+    return "Recommended path: treat this as a translation problem, not a qualification problem. Focus first on project coordinator, service coordinator, dispatcher, operations coordinator, or administrative project-support roles, then make the resume prove that bridge.";
   }
 
   if (hybridDetected && target === "split") {
@@ -1289,7 +1596,33 @@ function renderResult(data) {
   html += data.summaryInsight;
   html += "</div>";
 
-  // 2. Main issue
+  // 2. Career-transition bridge
+  if (data.careerTransition) {
+    html += "<div class='card transition-bridge'>";
+    html += "<div class='section-label'>How your experience translates</div>";
+    html += data.transitionSummary;
+    html += "<div class='bridge-grid'>";
+    html += "<div class='bridge-column'><b>Current background</b><ul>";
+    data.careerBridge.current.forEach(item => { html += "<li>" + item + "</li>"; });
+    html += "</ul></div>";
+    html += "<div class='bridge-column'><b>Transferable signals</b><ul>";
+    data.careerBridge.transferable.forEach(item => { html += "<li>" + item + "</li>"; });
+    html += "</ul></div>";
+    html += "<div class='bridge-column'><b>Stronger target roles</b><ul>";
+    data.careerBridge.target.forEach(item => { html += "<li>" + item + "</li>"; });
+    html += "</ul></div>";
+    html += "</div>";
+
+    html += "<div class='role-list'><b>Possible transition fits:</b><br>";
+    data.transitionRoleFits.forEach(item => {
+      html += "<span class='role-fit'>" + item.fit + "</span> " + item.role + " — " + item.reason + "<br>";
+    });
+    html += "</div>";
+
+    html += "</div>";
+  }
+
+  // 3. Main issue
   html += "<div class='card highlight'>";
   html += "<div class='section-label'>Most likely issue</div>";
   html += "<b>Main issue:</b> " + data.primaryIssue + "<br>";
