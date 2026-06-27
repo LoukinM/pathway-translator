@@ -545,6 +545,67 @@ const transitionWords = [
   "looking to move into"
 ];
 
+const directionQuestionWords = [
+  "what jobs",
+  "jobs i qualify",
+  "jobs i actually qualify",
+  "what roles",
+  "roles fit",
+  "what fits",
+  "direction makes the most sense",
+  "what direction",
+  "which direction",
+  "where i should focus",
+  "where to focus",
+  "not sure what direction",
+  "don t know what direction",
+  "don't know what direction",
+  "don t know what jobs",
+  "don't know what jobs",
+  "don t know where",
+  "don't know where",
+  "what career",
+  "career path"
+];
+
+function detectDirectionQuestion(text) {
+  const hasDirectionQuestion = containsAny(text, directionQuestionWords);
+  const hasAdminEvidence = containsAny(text, [
+    "customer service",
+    "retail",
+    "retail management",
+    "business degree",
+    "business administration",
+    "excel",
+    "inventory",
+    "documentation",
+    "scheduling",
+    "admin",
+    "operations",
+    "workflow",
+    "coordinator",
+    "dispatcher"
+  ]);
+
+  const hasHandsOnEvidence = containsAny(text, [
+    "low voltage",
+    "construction",
+    "field",
+    "installation",
+    "tools",
+    "hands on",
+    "hands-on",
+    "electrical",
+    "technician"
+  ]);
+
+  return {
+    detected: hasDirectionQuestion,
+    hasAdminEvidence,
+    hasHandsOnEvidence
+  };
+}
+
 function detectDestinationAfterIntent(text) {
   const destinationPatterns = [
     /(?:into|toward|towards|to|for)\s+([a-z0-9\s]{3,80})/,
@@ -956,9 +1017,18 @@ function analyzeUser(input) {
   let misinterpretationDetected = false;
   let hybridDetected = detectHybridProfile(text);
   let careerTransition = detectCareerTransition(text);
+  let directionQuestion = detectDirectionQuestion(text);
   let targetInfo = detectTarget(text);
   let target = targetInfo.target;
   let targetSource = targetInfo.source;
+
+  // Direction-question rule:
+  // If the user asks what jobs/roles/direction fit and gives admin/operations evidence,
+  // treat the answer as navigation first, then diagnosis second.
+  if (directionQuestion.detected && directionQuestion.hasAdminEvidence && target !== "hands-on") {
+    target = "admin";
+    targetSource = "inferred from career-direction question and transferable background";
+  }
 
   misinterpretationPatterns.forEach(phrase => {
     if (text.includes(phrase)) {
@@ -993,6 +1063,21 @@ function analyzeUser(input) {
     } else {
       addSignal(signals, "You appear to be trying to transition, but the destination role is not clear enough yet.");
       contradictions.push("The transition may be valid, but the target lane needs to be clearer before the resume can support it.");
+    }
+  }
+
+  if (directionQuestion.detected) {
+    scores.translation += 4;
+    scores.ranking += 1;
+    hybridDetected = true;
+    addSignal(signals, "You are not only asking why applications stall — you are asking which direction your background supports.");
+
+    if (target === "admin") {
+      addSignal(signals, "Your background contains signals that can connect to admin, operations, coordinator, dispatch, or project-support roles.");
+      contradictions.push("Your experience may contain useful pieces, but the target direction needs to be made obvious to employers.");
+    } else {
+      addSignal(signals, "Your background may support more than one lane, so the next step is choosing one direction to test first.");
+      contradictions.push("A broad background is not automatically weak, but it can become hard to read if the target role is unclear.");
     }
   }
 
@@ -1108,8 +1193,10 @@ function analyzeUser(input) {
     missingInfo: missingInfo(primary, target, careerTransition),
     simplePattern: simplePattern(primary, secondary),
     careerTransition: careerTransition.detected,
+    directionQuestion: directionQuestion.detected,
+    showExperienceBridge: careerTransition.detected || directionQuestion.detected,
     careerBridge: careerBridge(target),
-    transitionSummary: transitionSummary(target),
+    transitionSummary: transitionSummary(target, directionQuestion.detected),
     transitionRoleFits: transitionRoleFits(target),
     hybridDetected,
     target,
@@ -1123,25 +1210,28 @@ function careerBridge(target) {
   if (target === "admin") {
     return {
       current: [
-        "Field or hands-on execution",
-        "Customer or team communication",
-        "Following instructions, safety, and process",
-        "Materials, tasks, and job-site coordination"
+        "Customer service or retail experience",
+        "Inventory, materials, or task tracking",
+        "Documentation, scheduling, or workflow exposure",
+        "Field, project, or hands-on execution when present",
+        "Business education or operations exposure"
       ],
       transferable: [
+        "Customer communication",
         "Documentation",
         "Scheduling / coordination",
+        "Inventory or material tracking",
         "Workflow follow-through",
         "Problem solving",
-        "Communication",
         "Process adherence"
       ],
       target: [
-        "Project Coordinator",
         "Operations Coordinator",
+        "Project Coordinator",
         "Service Coordinator",
         "Dispatcher",
-        "Administrative Project Support"
+        "Administrative Project Support",
+        "Purchasing or Inventory Assistant"
       ]
     };
   }
@@ -1193,9 +1283,13 @@ function careerBridge(target) {
   };
 }
 
-function transitionSummary(target) {
+function transitionSummary(target, directionQuestion) {
+  if (target === "admin" && directionQuestion) {
+    return "Based on the background you described, your experience points most naturally toward office-based coordination, operations, dispatch, service coordination, or project-support roles. The challenge is making those connections obvious instead of letting employers see only the old job titles.";
+  }
+
   if (target === "admin") {
-    return "You are not simply asking whether your past experience is good. You are trying to make field or hands-on experience readable for office-based coordination, operations, dispatch, or project-support roles.";
+    return "You are not simply asking whether your past experience is good. You are trying to make field, retail, customer service, or hands-on experience readable for office-based coordination, operations, dispatch, or project-support roles.";
   }
 
   if (target === "hands-on") {
@@ -1208,11 +1302,12 @@ function transitionSummary(target) {
 function transitionRoleFits(target) {
   if (target === "admin") {
     return [
-      { role: "Project Coordinator", fit: "Strong", reason: "connects field exposure, documentation, scheduling, and communication" },
-      { role: "Service Coordinator", fit: "Strong", reason: "connects customer communication, dispatch-style coordination, and follow-through" },
-      { role: "Operations Coordinator", fit: "Good", reason: "connects process, workflow, materials, and execution" },
+      { role: "Operations Coordinator", fit: "Strong", reason: "connects process, workflow, inventory, communication, and follow-through" },
+      { role: "Project Coordinator", fit: "Strong", reason: "connects documentation, scheduling, project exposure, and communication" },
+      { role: "Service Coordinator", fit: "Good", reason: "connects customer communication, dispatch-style coordination, and follow-through" },
       { role: "Dispatcher", fit: "Good", reason: "connects communication, urgency, organization, and routing of work" },
-      { role: "Administrative Project Support", fit: "Good", reason: "connects documentation, accuracy, and project follow-up" }
+      { role: "Administrative Project Support", fit: "Good", reason: "connects documentation, accuracy, and project follow-up" },
+      { role: "Purchasing or Inventory Assistant", fit: "Possible", reason: "connects inventory, materials, tracking, and accuracy" }
     ];
   }
 
@@ -1597,7 +1692,7 @@ function renderResult(data) {
   html += "</div>";
 
   // 2. Career-transition bridge
-  if (data.careerTransition) {
+  if (data.showExperienceBridge) {
     html += "<div class='card transition-bridge'>";
     html += "<div class='section-label'>How your experience translates</div>";
     html += data.transitionSummary;
